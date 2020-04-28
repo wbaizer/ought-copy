@@ -2,8 +2,9 @@ import pytest
 
 import numpy as onp
 import jax.numpy as np
+import numpy as onp
 
-from ergo.logistic import fit_single_scipy, fit_single, fit_mixture
+from ergo.logistic import fit_single_scipy, fit_single, fit_mixture, plot_mixture
 
 
 def test_fit_single_scipy():
@@ -43,7 +44,6 @@ def test_fit_mixture_large():
     assert locs[1] == pytest.approx(0.7, abs=0.2)
     assert scales[0] == pytest.approx(0.1, abs=0.2)
     assert scales[1] == pytest.approx(0.2, abs=0.2)
-
 
 # visual tests, comment out usually
 
