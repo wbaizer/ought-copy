@@ -3,6 +3,7 @@ import pytest
 import requests
 import pendulum
 import pprint
+import numpy as np
 import tests.mocks
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -10,12 +11,6 @@ pp = pprint.PrettyPrinter(indent=4)
 uname = "oughttest"
 pwd = "6vCo39Mz^rrb"
 user_id = 112420
-
-mock_mixture_params = ergo.logistic.LogisticMixtureParams(
-    components=[ergo.logistic.LogisticParams(loc=0.15, scale=0.037034005),
-                ergo.logistic.LogisticParams(loc=0.85, scale=0.032395907)],
-    probs=[0.5000871, 0.49991286]
-)
 
 
 class TestMetaculus:
@@ -25,6 +20,8 @@ class TestMetaculus:
     continuous_log_open_question = metaculus.get_question(3961)
     closed_question = metaculus.get_question(3965)
     binary_question = metaculus.get_question(3966)
+    mock_samples = np.array([ergo.logistic.sample_mixture(
+        tests.mocks.mock_true_params) for _ in range(0, 5000)])
 
     def test_login(self):
         assert self.metaculus.user_id == user_id
@@ -35,25 +32,25 @@ class TestMetaculus:
 
     def test_submit_continuous_linear_open(self):
         submission = self.continuous_linear_open_question.get_submission(
-            mock_mixture_params)
+            tests.mocks.mock_normalized_params)
         r = self.continuous_linear_open_question.submit(submission)
         assert r.status_code == 202
 
     def test_submit_continuous_linear_closed(self):
         submission = self.continuous_linear_closed_question.get_submission(
-            mock_mixture_params)
+            tests.mocks.mock_normalized_params)
         r = self.continuous_linear_closed_question.submit(submission)
         assert r.status_code == 202
 
     def test_submit_continuous_log_open(self):
         submission = self.continuous_log_open_question.get_submission(
-            mock_mixture_params)
+            tests.mocks.mock_normalized_params)
         r = self.continuous_log_open_question.submit(submission)
         assert r.status_code == 202
 
     def test_submit_from_samples(self):
         r = self.continuous_linear_open_question.submit_from_samples(
-            tests.mocks.samples, samples_for_fit=1000)
+            self.mock_samples, samples_for_fit=1000)
         assert r.status_code == 202
 
     def test_submit_binary(self):
@@ -63,21 +60,13 @@ class TestMetaculus:
     def test_submit_closed_question_fails(self):
         with pytest.raises(requests.exceptions.HTTPError):
             submission = self.closed_question.get_submission(
-                mock_mixture_params)
+                tests.mocks.mock_normalized_params)
             r = self.closed_question.submit(submission)
             print(r)
 
     def test_score_binary(self):
         # smoke test
         self.binary_question.get_scored_predictions()
-
-    # def test_score_continuous(self):
-    #     # smoke test
-    #     self.continuous_linear_open_question.get_scored_predictions()
-
-    # def test_get_prediction_results(self):
-    #     # smoke test
-    #     self.metaculus.get_prediction_results()
 
     def test_get_questions_json(self):
         questions = self.metaculus.get_questions_json()
@@ -105,17 +94,53 @@ class TestMetaculus:
             self.metaculus.get_questions_json(question_status="closed"))
         assert(closed["close_time"] < pendulum.now()).all()
 
+    def test_submitted_equals_predicted_linear(self):
+        r = self.continuous_linear_open_question.submit_from_samples(
+            self.mock_samples)
+        latest_prediction = self.continuous_linear_open_question.get_latest_normalized_prediction()
+        scaled_params = self.continuous_linear_open_question.get_true_scale_mixture(
+            latest_prediction)
+        prediction_samples = np.array([ergo.logistic.sample_mixture(
+            scaled_params) for _ in range(0, 5000)])
+
+        assert np.mean(self.mock_samples) == pytest.approx(
+            np.mean(prediction_samples), np.mean(prediction_samples)/10)
+
+    def test_submitted_equals_predicted_log(self):
+        r = self.continuous_log_open_question.submit_from_samples(
+            self.mock_samples)
+        latest_prediction = self.continuous_log_open_question.get_latest_normalized_prediction()
+        prediction_samples = np.array([self.continuous_log_open_question.true_from_normalized_value(ergo.logistic.sample_mixture(
+            latest_prediction)) for _ in range(0, 5000)])
+
+        assert np.mean(self.mock_samples) == pytest.approx(
+            np.mean(prediction_samples), np.mean(prediction_samples)/10)
+
 # Visual tests -- eyeball the results from these to see if they seem reasonable
 # leave these commented out usually, just use them if they seem useful
 
 
-class TestPandemic:
-    metaculus = ergo.Metaculus(uname, pwd, api_domain="pandemic")
-    sf_question = metaculus.get_question(3931)
+# class TestVisualPandemic:
+#     metaculus = ergo.Metaculus(uname, pwd, api_domain="pandemic")
+#     sf_question = metaculus.get_question(3931)
+#     deaths_question = metaculus.get_question(3996)
+#     show_prediction_question = metaculus.get_question(4112)
+#     show_prediction_log_question = metaculus.get_question(4113)
+#     mock_samples = np.array([ergo.logistic.sample_mixture(
+#         tests.mocks.mock_true_params) for _ in range(0, 5000)])
 
-    # def test_show_submission(self):
-    #     self.sf_question.show_submission(
-    #         tests.mocks.samples)
+#     def test_show_submission(self):
+#         self.sf_question.show_submission(
+#             self.mock_samples)
 
-    # def test_show_performance(self):
-    #     self.sf_question.show_performance()
+#     def test_show_submission_log(self):
+#         self.deaths_question.show_submission(
+#             self.mock_samples)
+
+#     def test_show_performance(self):
+#         # should have two humps, one on the left and one on the right
+#         self.show_prediction_question.show_performance()
+
+#     def test_show_performance_log(self):
+#         # should have a low, flat hump on the left and a skinny hump on the right
+#         self.show_prediction_log_question.show_performance()
