@@ -212,7 +212,6 @@ class ContinuousQuestion(MetaculusQuestion):
                        min_open_high)
         else:
             high = 1
-
         return SubmissionLogisticParams(clipped_loc, clipped_scale, low, high)
 
     def denormalize_samples(self, samples) -> np.ndarray:
