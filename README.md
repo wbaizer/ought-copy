@@ -19,11 +19,11 @@ q_ratio = metaculus.get_question(3755, name="Covid-19 ratio of fatalities to inf
 
 # Relate the three questions using a generative model
 def deaths_from_infections():
-  infections = q_infections.sample_community()
-  ratio = q_ratio.sample_community()
-  deaths = infections * ratio
-  ergo.tag(deaths, "Covid-19 deaths in 2020")
-  return deaths
+    infections = q_infections.sample_community()
+    ratio = q_ratio.sample_community()
+    deaths = infections * ratio
+    ergo.tag(deaths, "Covid-19 deaths in 2020")
+    return deaths
 
 # Compute model predictions for the `deaths` question
 samples = ergo.run(deaths_from_infections, num_samples=5000)
@@ -44,8 +44,8 @@ The theory behind Ergo:
     - Deep neural nets as expressive function approximators
 2. But they haven't been connected yet in a productive workflow:
     - It's difficult to get data in and out of prediction platforms
-    - Submitting and monitoring questions to these platforms takes a long time
-    - The questions on prediction platforms mostly aren't connected to decisions
+    - Submitting questions to these platforms takes a long time
+    - The questions on prediction platforms aren't connected to decisions, or even to other questions on the same platform
     - Human judgments don't scale
     - Models often can't take into account all relevant considerations
     - Workflows aren't made explicit so they can't be automated
@@ -107,41 +107,44 @@ If there's something you want Ergo to do, [let us know](https://github.com/ought
 The following notebooks have been created at different points in time and use Ergo in inconsistent ways. Most are rough scratchpads of work-in-progress and haven't been cleaned up for public consumption:
 
 1. [Generative models in Ergo](notebooks/generative-models.ipynb)
-    Models in Ergo are expressed as probabilistic programs. This notebook shows a simple example. As in [Guesstimate](https://www.getguesstimate.com), you can define distributions from 90% confidence intervals.
+    - Models in Ergo are expressed as probabilistic programs. 
+    - This notebook shows a simple example. 
+    - As in [Guesstimate](https://www.getguesstimate.com), you can define distributions from 90% confidence intervals.
 
 2. [Relating Metaculus community distributions: Infections, Deaths, and IFR](notebooks/community-distributions.ipynb)
-    A notebook for the model shown above that uses a model to update Metaculus community distributions towards consistency
+    - A notebook for the model shown above that uses a model to update Metaculus community distributions towards consistency
 
 3. [Model-based predictions of Covid-19 spread](notebooks/covid-19-metaculus.ipynb)
-   End-to-end example: 
+   - End-to-end example: 
      1. Load multiple questions from Metaculus
      2. Compute model predictions based on assumptions and external data
      3. Submit predictions to Metaculus
 
 4. [Model-based predictions of Covid-19 spread using inference from observed cases](notebooks/covid-19-inference.ipynb)
-   A version of the previous notebook that infers growth rates before and after lockdown decisions
+   - A version of the previous notebook that infers growth rates before and after lockdown decisions
 
 5. [Predicting how long lockdowns will last in multiple locations](notebooks/covid-19-lockdowns.ipynb) (WIP)
-   Make predictions on multiple Metaculus questions using external data (IHME) and a single model.
+   - Make predictions on multiple Metaculus questions using external data (IHME) and a single model.
 
 6. [Estimating the number of active Covid-19 infections in each country using multiple sources](notebooks/covid-19-active.ipynb) (WIP)
-   Integrate qualitative judgments and simple model-based extrapolation to estimate the number of active cases for a large number of countries.
+   - Integrate qualitative judgments and simple model-based extrapolation to estimate the number of active cases for a large number of countries.
    
 7. [How long will the average American spend under lockdown?](notebooks/covid-19-average-lockdown.ipynb) (WIP)
-   Show how related questions and how their community prediction has changed since making a prediction.
+   - Show how related questions and how their community prediction has changed since making a prediction.
    
 8. [Assorted predictions](notebooks/assorted-predictions.ipynb)
-   Nine quick predictions
+   - Nine quick predictions
 
 9. [Prediction dashboard](notebooks/prediction-dashboard.ipynb)
-   Show Metaculus prediction results as a dataframe, and filter questions by date and status.
+   - Show Metaculus prediction results as a dataframe
+   - Filter Metaculus questions by date and status.
 
    
 
 Notebooks on the path to Ergo (hosted on Colab):
 
 1. [Guesstimate in Colab](https://colab.research.google.com/drive/1V9eR6T1RAbtfpZYFaueL8miBJ6wgLXIm)
-   How can we get Guesstimate's sampling and visualization functionality in a Colab?
+   - How can we get Guesstimate's sampling and visualization functionality in a Colab?
    
 2. [Fitting mixtures of logistic distributions](https://colab.research.google.com/drive/1xwO-0A36wnut9GPlEaRj6zzZBBLf1T2C)
-   How can we transform arbitrary distributions represented as samples into the "mixtures of logistics" format Metaculus uses for user submissions?
+   - How can we transform arbitrary distributions represented as samples into the "mixtures of logistics" format Metaculus uses for user submissions?
