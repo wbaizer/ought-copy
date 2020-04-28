@@ -217,7 +217,7 @@ class ContinuousQuestion(MetaculusQuestion):
     def sample_community(self):
         normalized_sample = ppl.sample(
             self.community_dist()) / float(len(self.prediction_histogram))
-        sample = self.denormalize_samples(normalized_sample)
+        sample = self.denormalize_samples([normalized_sample])[0]
         if self.name:
             ppl.tag(sample, self.name)
         return sample
