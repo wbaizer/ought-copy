@@ -137,12 +137,12 @@ class TestMetaculus:
         open = self.metaculus.make_questions_df(
             self.metaculus.get_questions_json(question_status="open")
         )
-        assert (open["close_time"] > pendulum.now()).all()
+        assert (open["close_time"] > datetime.now()).all()
 
         closed = self.metaculus.make_questions_df(
             self.metaculus.get_questions_json(question_status="closed")
         )
-        assert (closed["close_time"] < pendulum.now()).all()
+        assert (closed["close_time"] < datetime.now()).all()
 
     def test_submitted_equals_predicted_linear(self):
         self.continuous_linear_open_question.submit_from_samples(self.mock_samples)
