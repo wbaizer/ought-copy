@@ -18,6 +18,11 @@ from typing_extensions import Literal
 import ergo.logistic as logistic
 import ergo.ppl as ppl
 
+from typing import Optional, List, Any, Dict, Union
+from scipy import stats
+
+from typing_extensions import Literal
+from dataclasses import dataclass
 
 @dataclass
 class ScoredPrediction:
@@ -582,6 +587,7 @@ class Metaculus:
         player_status: Literal[
             "any", "predicted", "not-predicted", "author", "interested", "private"
         ] = "any",  # 20 results per page
+        cat: Union[str, None] = None,
         pages: int = 1,
     ) -> List[Dict]:
         query_params = [f"status={question_status}", "order_by=-publish_time"]
@@ -592,6 +598,9 @@ class Metaculus:
                 query_params.append(
                     f"{self.player_status_to_api_wording[player_status]}={self.user_id}"
                 )
+
+        if cat is not None:
+            query_params.append(f"search=cat:{cat}")
 
         query_string = "&".join(query_params)
 
