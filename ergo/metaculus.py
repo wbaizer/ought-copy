@@ -902,6 +902,7 @@ class Metaculus:
         player_status: Literal[
             "any", "predicted", "not-predicted", "author", "interested", "private"
         ] = "any",  # 20 results per page
+        cat: Union[str, None] = None,
         pages: int = 1,
     ) -> List[Dict]:
         """
@@ -919,6 +920,9 @@ class Metaculus:
                 query_params.append(
                     f"{self.player_status_to_api_wording[player_status]}={self.user_id}"
                 )
+
+        if cat is not None:
+            query_params.append(f"search=cat:{cat}")
 
         query_string = "&".join(query_params)
 
