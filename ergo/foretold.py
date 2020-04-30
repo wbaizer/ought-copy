@@ -164,14 +164,14 @@ class ForetoldQuestion:
     def community_prediction_available(self):
         return self.floatCdf is not None
 
-    def getFloatCdfOrError(self):
+    def get_float_cdf_or_error(self):
         if not self.community_prediction_available:
             raise ValueError("No community prediction available")
         return self.floatCdf
 
     def quantile(self, q):
         """Quantile of distribution"""
-        floatCdf = self.getFloatCdfOrError()
+        floatCdf = self.get_float_cdf_or_error()
         return np.interp(q, floatCdf["ys"], floatCdf["xs"])
 
     def sample_community(self):
@@ -181,5 +181,5 @@ class ForetoldQuestion:
 
     def plotCdf(self):
         """Plot the CDF"""
-        floatCdf = self.getFloatCdfOrError()
-        seaborn.lineplot(self.floatCdf["xs"], self.floatCdf["ys"])
+        floatCdf = self.get_float_cdf_or_error()
+        seaborn.lineplot(floatCdf["xs"], floatCdf["ys"])
