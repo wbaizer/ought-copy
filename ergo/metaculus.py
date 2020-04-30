@@ -1,3 +1,39 @@
+"""
+This module lets you get question and prediction information from Metaculus
+and submit predictions, via the API (https://www.metaculus.com/api2/)
+
+**Example**
+
+In this example, we predict the admit rate for Harvard's class of 2029:
+
+https://www.metaculus.com/questions/3622
+
+We predict that the admit rate will be 20% higher than the current community prediction.
+
+.. doctest::
+    >>> import os
+    >>> import ergo
+    >>> import numpy as np
+
+    >>> metaculus = ergo.Metaculus(
+    ...     username=os.getenv("METACULUS_USERNAME"),
+    ...     password=os.getenv("METACULUS_PASSWORD"),
+    ...     api_domain="www"
+    ... )
+
+    >>> harvard_question = metaculus.get_question(3622)
+    >>> # harvard_question.show_community_prediction()
+
+    >>> community_prediction_samples = np.array(
+    ... [harvard_question.sample_community() for _ in range (0,5000)]
+    ... )
+    >>> my_prediction_samples = community_prediction_samples * 1.2
+
+    >>> # harvard_question.show_submission(my_prediction_samples)
+    >>> harvard_question.submit_from_samples(my_prediction_samples)
+    <Response [202]>
+"""
+
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 import functools
@@ -7,18 +43,6 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from plotnine import (  # type: ignore
-    aes,
-    element_text,
-    facet_wrap,
-    geom_density,
-    geom_histogram,
-    ggplot,
-    guides,
-    labs,
-    scale_x_datetime,
-    theme,
-)
 import pyro.distributions as dist
 import requests
 from scipy import stats
@@ -27,7 +51,6 @@ from typing_extensions import Literal
 
 import ergo.logistic as logistic
 import ergo.ppl as ppl
-from ergo.theme import ergo_theme  # type: ignore
 
 
 @dataclass
@@ -661,15 +684,10 @@ class LinearQuestion(ContinuousQuestion):
             samples
         )  # logistic mixture params in the Metaculus API format
 
-        # This is a pragmatic comprimise that will take predictions out of range and assign them the nearest in-range point
-        def clip(samples):
-            return max(
-                min(samples, self.question_range["max"]), self.question_range["min"]
-            )
+    def show_submission(self, samples):
+        submission = self.get_submission_from_samples(samples)
 
-        prediction_normed_samples = pd.Series(
-            [logistic.sample_mixture(prediction) for _ in range(0, num_samples)]
-        ).apply(clip)
+        self.show_prediction(submission, samples)
 
         prediction_true_scale_samples = self.denormalize_samples(
             prediction_normed_samples
@@ -890,6 +908,7 @@ class LinearDateQuestion(LinearQuestion):
         :param samples: normalized samples
         :return: dates
         """
+        samples = pd.Series(samples)
 
         def denorm(sample):
             return self.question_range["date_min"] + timedelta(
