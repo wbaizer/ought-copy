@@ -120,6 +120,8 @@ class MetaculusQuestion:
             )
 
     def __str__(self):
+        """:return: The question title from Metaculus if that's available, else a generic string
+        """
         if self.data:
             return self.data["title"]
         return "<MetaculusQuestion>"
@@ -255,6 +257,8 @@ class ContinuousQuestion(MetaculusQuestion):
 
     @property
     def question_range_width(self):
+        """Width of the range of answers specified when the question was created
+        """
         return self.question_range["max"] - self.question_range["min"]
 
     # TODO: maybe it's better to fit the logistic first then normalize, rather than the other way around?
