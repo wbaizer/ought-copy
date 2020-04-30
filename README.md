@@ -1,10 +1,10 @@
-[![Build Status](https://travis-ci.org/oughtinc/ergo.svg?branch=master)](https://travis-ci.org/oughtinc/ergo) [![Documentation Status](https://readthedocs.com/projects/ought-ergo/badge/?version=latest&token=259162a0cd579e231ba0828410ff8b8f813f5eac663dcc8882b1244decdc97ae)](https://ergo.ought.org) [![Codecov Status](https://codecov.io/gh/oughtinc/ergo/branch/master/graph/badge.svg)](https://codecov.io/gh/oughtinc/ergo)
+[![Build Status](https://travis-ci.org/oughtinc/ergo.svg?branch=master)](https://travis-ci.org/oughtinc/ergo) [![Documentation Status](https://readthedocs.com/projects/ought-ergo/badge/?version=latest&token=259162a0cd579e231ba0828410ff8b8f813f5eac663dcc8882b1244decdc97ae)](https://ought-ergo.readthedocs-hosted.com/en/latest/?badge=latest) [![Codecov Status](https://codecov.io/gh/oughtinc/ergo/branch/master/graph/badge.svg)](https://codecov.io/gh/oughtinc/ergo)
 
 # Ergo
 
 A Python library for integrating model-based and judgmental forecasting
 
-[Quickstart](#quickstart) | [Docs](https://ergo.ought.org) | [Examples](#notebooks-using-ergo)
+[Quickstart](#quickstart) | [Docs](https://ought-ergo.readthedocs-hosted.com/en/latest/?badge=latest) | [Examples](#notebooks-using-ergo)
 
 ## Example
 
@@ -77,7 +77,7 @@ Here's what Ergo provides right now:
   - Specify distributions using 90% confidence intervals, e.g. `ergo.lognormal_from_interval(10, 100)`
   - For Bayesian inference, Ergo provides a wrapper around Pyro's variational inference algorithm
   - Get model results as Pandas dataframes
-- Interact with the Metaculus and Foretold prediction platforms
+- Interact with the Metaculus prediction platform
   - Load question data given question ids
   - Use community distributions as variables in generative models
   - Submit model predictions to Metaculus
@@ -88,10 +88,11 @@ Here's what Ergo provides right now:
 
 [WIP](https://github.com/oughtinc/ergo/projects/1):
 
-- Documentation
-- More complete Metaculus and Foretold API
-  - Submitting data to Foretold
-- Clearer modeling API
+- Metaculus API improvements
+  - Support questions with distributions on dates
+  - Improve community distribution support (accuracy, plotting)
+- Foretold API improvements
+  - Submitting data
 
 Planned:
 
