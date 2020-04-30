@@ -11,7 +11,7 @@ import numpy as onp
 import scipy as oscipy
 import seaborn
 import torch
-from tqdm.autonotebook import tqdm
+import tqdm
 
 from ergo.ppl import categorical
 
