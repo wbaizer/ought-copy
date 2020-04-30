@@ -1,17 +1,18 @@
+"""
+This module provides a few lightweight wrappers around probabilistic
+programming primitives from Pyro.
+"""
+
 import math
-
-import pyro
-import torch
-import tqdm
-
-import pandas as pd
-import pyro.distributions as dist  # type: ignore
-
-from pyro.contrib.autoname import name_count
-from pyro.infer import SVI, Trace_ELBO, Predictive  # type: ignore
-
 from typing import Dict, List
 
+import pandas as pd
+import pyro
+from pyro.contrib.autoname import name_count
+import pyro.distributions as dist  # type: ignore
+from pyro.infer import SVI, Predictive, Trace_ELBO  # type: ignore
+import torch
+from tqdm.autonotebook import tqdm  # type: ignore
 
 # Config
 
@@ -22,6 +23,13 @@ pyro.enable_validation(True)
 
 
 def sample(dist: dist.Distribution, name: str = None, **kwargs):
+    """
+    Sample from a primitive distribution
+
+    :param dist: A Pyro distribution
+    :param name: Name to assign to this sampling site in the execution trace
+    :return: A sample from the distribution (usually Torch tensor)
+    """
     if not name:
         # If no name is provided, the model should use the @name_count
         # decorator to avoid using the same name for multiple variables
@@ -30,6 +38,8 @@ def sample(dist: dist.Distribution, name: str = None, **kwargs):
 
 
 def tag(value, name: str):
+    if not isinstance(value, torch.Tensor):
+        value = torch.tensor(value)  # type: ignore
     return pyro.deterministic(name, value)
 
 
@@ -53,12 +63,16 @@ def lognormal(mean=0, stdev=1, **kwargs):
     return sample(dist.LogNormal(mean, stdev), **kwargs)
 
 
+def halfnormal(stdev, **kwargs):
+    return sample(dist.HalfNormal(stdev), **kwargs)
+
+
 def uniform(low=0, high=1, **kwargs):
     return sample(dist.Uniform(low, high), **kwargs)
 
 
-def beta(alpha=1, beta=1, **kwargs):
-    return sample(dist.Beta(alpha, beta), **kwargs)
+def beta(a=1, b=1, **kwargs):
+    return sample(dist.Beta(a, b), **kwargs)
 
 
 def categorical(ps, **kwargs):
@@ -69,23 +83,23 @@ def categorical(ps, **kwargs):
 
 
 def NormalFromInterval(low, high):
-    # This assumes a centered 90% confidence interval, i.e. the left endpoint
-    # marks 0.05% on the CDF, the right 0.95%.
+    """This assumes a centered 90% confidence interval, i.e. the left endpoint
+    marks 0.05% on the CDF, the right 0.95%."""
     mean = (high + low) / 2
     stdev = (high - mean) / 1.645
     return dist.Normal(mean, stdev)
 
 
 def HalfNormalFromInterval(high):
-    # This assumes a 90% confidence interval starting at 0,
-    # i.e. right endpoint marks 90% on the CDF
+    """This assumes a 90% confidence interval starting at 0,
+    i.e. right endpoint marks 90% on the CDF"""
     stdev = high / 1.645
     return dist.HalfNormal(stdev)
 
 
 def LogNormalFromInterval(low, high):
-    # This assumes a centered 90% confidence interval, i.e. the left endpoint
-    # marks 0.05% on the CDF, the right 0.95%.
+    """This assumes a centered 90% confidence interval, i.e. the left endpoint
+    marks 0.05% on the CDF, the right 0.95%."""
     loghigh = math.log(high)
     loglow = math.log(low)
     mean = (loghigh + loglow) / 2
@@ -116,8 +130,13 @@ def beta_from_hits(hits, total, **kwargs):
     return sample(BetaFromHits(hits, total), **kwargs)
 
 
-def random_choice(options, **kwargs):
-    ps = torch.Tensor([1 / len(options)] * len(options))
+def random_choice(options, ps=None):
+    if ps is None:
+        ps = torch.tensor([1 / len(options)] * len(options))
+    else:
+        # in case ps are passed in as some array-like type other than torch.tensor
+        ps = torch.tensor(ps)
+
     idx = sample(dist.Categorical(ps))
     return options[idx]
 
@@ -138,14 +157,15 @@ def run(model, num_samples=5000, ignore_unnamed=True) -> pd.DataFrame:
     2. Return dataframe with one row for each execution
     """
     model = name_count(model)
-    samples: Dict[str, List[float]] = {}
-    for i in tqdm.trange(num_samples):
+    samples: List[Dict[str, float]] = []
+    for _ in tqdm(range(num_samples)):
+        sample: Dict[str, float] = {}
         trace = pyro.poutine.trace(model).get_trace()
         for name in trace.nodes.keys():
             if trace.nodes[name]["type"] == "sample":
                 if not ignore_unnamed or not name.startswith("_var"):
-                    samples.setdefault(name, [])
-                    samples[name].append(trace.nodes[name]["value"].item())  # FIXME
+                    sample[name] = trace.nodes[name]["value"].item()
+        samples.append(sample)
     return pd.DataFrame(samples)  # type: ignore
 
 
@@ -157,7 +177,7 @@ def infer_and_run(
     learning_rate=0.01,
     early_stopping_patience=200,
 ) -> pd.DataFrame:
-    """ 
+    """
     debug - whether to output debug information
     num_iterations - Number of optimizer iterations
     learning_rate - Optimizer learning rate
@@ -173,7 +193,7 @@ def infer_and_run(
             print(f"{k}: {v[1]:.4f} [{v[0]:.4f}, {v[2]:.4f}]")
 
     model = name_count(model)
-    
+
     # Automatically chooses a normal distribution for each variable
     guide = pyro.infer.autoguide.AutoNormal(
         model, init_loc_fn=pyro.infer.autoguide.init_to_median
@@ -211,4 +231,3 @@ def infer_and_run(
     predictive = Predictive(model, guide=guide, num_samples=num_samples)
     raw_samples = predictive(training=False)
     return pd.DataFrame(to_numpy(raw_samples))
-
